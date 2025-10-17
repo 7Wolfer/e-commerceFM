@@ -7,6 +7,7 @@
   <title>Frutería Madrid</title>
   <link rel="stylesheet" href="/fruteria-madrid/styles.css">
   <link rel="icon" href="/fruteria-madrid/assets/logoFM.png">
+  <script src="https://js.stripe.com/v3"></script>
 </head>
 <body>
   <!-- Header -->
@@ -26,7 +27,9 @@
         </div>
       </nav>
       <div class="actions">
-        <button class="btn icon" onclick="navigate('catalogo')">🛒 <span id="cartCount">0</span></button>
+        <button type="button" class="btn icon" id="cartButton" onclick="toggleCart(true)">
+        🛒 <span id="cartCount">0</span>
+        </button>
         <button class="btn" id="profileBtn" onclick="navigate('perfil')">Perfil</button>
         <button class="btn" id="loginBtn" onclick="openAuth()">Ingresar</button>
         <button class="btn primary" id="registerBtn" onclick="openAuth(true)">Crear tu cuenta</button>
@@ -143,8 +146,6 @@
       <p>Haz tu súper completo y recibe gratis.</p>
       <div class="oauth">
         <button class="google" onclick="firebaseLogin('google')">Continuar con Google</button>
-        <button class="facebook" onclick="firebaseLogin('facebook')">Continuar con Facebook</button>
-        <button class="apple" onclick="firebaseLogin('apple')">Continuar con Apple</button>
         <button class="email" onclick="firebaseLogin('email')">Continuar con Email</button>
       </div>
       <p style="margin-top:8px"><small>Al dar en continuar, declaro que soy mayor de edad y acepto los <a href='#/terminos' onclick="showSimple('Términos y Condiciones')">Términos y Condiciones</a> y <a href='#/privacidad' onclick="showSimple('Avisos de Privacidad')">Políticas de Privacidad</a>.</small></p>
@@ -188,13 +189,14 @@
         <button class="btn" onclick="askLocation()">📍 Usar mi ubicación actual</button>
       </div>
       <div class="total"><span>Total</span><span id="totalPrice">$0.00</span></div>
-      <button class="btn primary">Continuar al pago</button>
+      <button class="btn primary" id="checkoutBtn">Continuar al pago</button>
+
       <small>El pago con tarjeta se integrará más adelante (Stripe / Mercado Pago).</small>
     </div>
   </aside>
 
   
-  <script src="/fruteria-madrid/app.js"></script>
+  
 
 <!-- Firebase Client SDKs -->
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
@@ -262,6 +264,7 @@
     }
   });
 </script>
+<script src="/fruteria-madrid/app.js"></script>
 
 </body>
 </html>

@@ -1,4 +1,3 @@
-
 const $ = (q)=>document.querySelector(q);
 const $$ = (q)=>document.querySelectorAll(q);
 const state = {
@@ -97,16 +96,62 @@ function renderProducts(){
 }
 
 /* Cart */
+/* ===================== CARRITO ===================== */
+
+/* Usa SOLO una utilidad de precio (ya tienes arriba una: formatPrice(v)).
+   Si prefieres la de abajo, borra la de arriba y deja esta: */
+// function formatPrice(n){ return `$${n.toFixed(2)}`; }
+
+/* Añadir al carrito */
 function addToCart(p){
-  const line = state.cart.find(i=>i.id===p.id);
-  if(line) line.qty++; else state.cart.push({id:p.id, name:p.name, price:p.price, img:p.img, qty:1});
-  saveCart(); toggleCart(true);
+  const line = state.cart.find(i => i.id === p.id);
+  if (line) line.qty++;
+  else state.cart.push({ id:p.id, name:p.name, price:p.price, img:p.img, qty:1 });
+
+  saveCart();
+  updateCartCount();
+  renderCart();
+  toggleCart(true);
 }
-function toggleCart(open){ $('#cartDrawer').classList.toggle('open', open); if(open) renderCart(); }
+
+/* Cambiar cantidad */
+function qty(i, d){
+  state.cart[i].qty += d;
+  if (state.cart[i].qty <= 0) state.cart.splice(i,1);
+  saveCart();
+  updateCartCount();
+  renderCart();
+}
+
+/* Quitar línea */
+function removeLine(i){
+  state.cart.splice(i,1);
+  saveCart();
+  updateCartCount();
+  renderCart();
+}
+
+/* Total */
+function sumCart(){
+  return state.cart.reduce((a,l) => a + l.qty * l.price, 0);
+}
+
+/* Contador del ícono del carrito */
+function updateCartCount(){
+  const n = state.cart.reduce((a,l) => a + l.qty, 0);
+  const badge = document.getElementById('cartCount');
+  if (badge) badge.textContent = n;
+}
+
+/* Pintar líneas dentro del drawer */
 function renderCart(){
-  const root = $('#cartLines'); root.innerHTML='';
-  state.cart.forEach((l,idx)=>{
-    const row = document.createElement('div'); row.className='line';
+  const root = document.getElementById('cartLines');
+  if (!root) return;                // <-- FIX CRÍTICO
+
+  root.innerHTML = '';
+  state.cart.forEach((l, idx)=>{
+    const row = document.createElement('div');
+    row.className = 'line';
     row.innerHTML = `
       <img src="${l.img}" alt="">
       <div style="flex:1">
@@ -114,31 +159,57 @@ function renderCart(){
         <div>${formatPrice(l.price)}</div>
       </div>
       <div style="display:flex;gap:6px;align-items:center">
-        <button class="btn" onclick="qty(${idx},-1)">-</button>
+        <button class="btn" onclick="qty(${idx},-1)">−</button>
         <span>${l.qty}</span>
         <button class="btn" onclick="qty(${idx},1)">+</button>
       </div>
-      <button class="btn" onclick="removeLine(${idx})">✕</button>
+      <button class="btn" onclick="removeLine(${idx})">×</button>
     `;
     root.appendChild(row);
   });
-  $('#totalPrice').textContent = formatPrice(sumCart());
+
+  const totalEl = document.getElementById('totalPrice');
+  if (totalEl) totalEl.textContent = formatPrice(sumCart());
 }
-function qty(i,d){ state.cart[i].qty += d; if(state.cart[i].qty<=0) state.cart.splice(i,1); saveCart(); renderCart(); }
-function removeLine(i){ state.cart.splice(i,1); saveCart(); renderCart(); }
-$$("input[name='fulfill']").forEach(r=>r.addEventListener('change',()=>{
-  const v = document.querySelector("input[name='fulfill']:checked").value;
-  $('#addressBlock').classList.toggle('hidden', v!=='delivery');
-}));
+
+/* Abrir/cerrar drawer */
+function toggleCart(open){
+  const drawer = document.getElementById('cartDrawer');
+  if (!drawer) return;
+  drawer.classList.toggle('open', open);
+  drawer.setAttribute('aria-hidden', open ? 'false' : 'true');
+  if (open) renderCart();
+}
+
+/* Ubicación */
 function askLocation(){
-  if(!navigator.geolocation){ alert('Tu navegador no soporta geolocalización'); return; }
+  if (!navigator.geolocation){ alert('Tu navegador no soporta geolocalización'); return; }
   navigator.geolocation.getCurrentPosition(pos=>{
     const {latitude, longitude} = pos.coords;
-    $('#addressInput').value = `Ubicación actual: ${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
-  }, err=>{
-    alert('No se pudo obtener tu ubicación. Revisa permisos del navegador.');
-  });
+    const input = document.getElementById('addressInput');
+    if (input) input.value = `Ubicación actual: ${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
+  }, ()=> alert('No se pudo obtener tu ubicación. Revisa permisos del navegador.'));
 }
+
+/* Enlaces/Listeners ÚNICOS */
+document.addEventListener('DOMContentLoaded', () => {
+  // Botón del icono del carrito (header)
+  document.addEventListener('click', (e)=>{
+    const btn = e.target.closest('#cartButton');
+    if (btn){
+      e.preventDefault();
+      toggleCart(true);
+    }
+  });
+
+  // Botón "Continuar al pago"
+  document.getElementById('checkoutBtn')?.addEventListener('click', onCheckoutClick);
+
+
+  // Pinta contador al cargar
+  updateCartCount();
+});
+
 
 /* Auth & Profile via PHP */
 function openAuth(isRegister=false){ $('#authTitle').textContent = isRegister? 'Crear tu cuenta' : 'Iniciar sesión'; $('#authModal').classList.add('show'); }
@@ -184,11 +255,7 @@ async function loadMeta(){
   const res = await fetch('./api/meta.php'); const meta = await res.json();
   state.meta = meta;
 }
-document.addEventListener('click', (e)=>{
-  if(e.target && e.target.matches('.checkout .btn.primary')){
-    createOrder();
-  }
-});
+
 async function createOrder(){
   const metodo = document.querySelector("input[name='fulfill']:checked").value;
   const address = (metodo==='delivery') ? { linea1: document.getElementById('addressInput').value } : null;
@@ -198,3 +265,257 @@ async function createOrder(){
   if(data.ok){ alert('Pedido creado #' + data.pedido_id + '\nTotal: $' + data.total); state.cart = []; saveCart(); toggleCart(false); }
   else { alert('Error: ' + (data.error||'desconocido')); }
 }
+let isProcessing = false;
+
+async function onCheckoutClick(e){
+  e.preventDefault();
+  if (isProcessing) return;
+  isProcessing = true;
+  try {
+    const metodo = getFulfillMethod(); // 'pickup' o 'delivery'
+    if (metodo === 'pickup') {
+      // Solo crea la orden en tu backend y NO Stripe
+      await createOrder();
+    } else {
+      // Envío a domicilio -> Stripe
+      await pagarConTarjeta(e);
+    }
+  } finally {
+    isProcessing = false;
+  }
+}
+
+async function pagarConTarjeta(e){
+  e?.preventDefault();
+
+  try {
+    const metodo = document.querySelector("input[name='fulfill']:checked")?.value || 'pickup';
+    const direccion = (metodo === 'delivery')
+      ? { linea1: document.getElementById('addressInput')?.value.trim() || '' }
+      : null;
+
+    if (metodo === 'delivery' && (!direccion || !direccion.linea1)) {
+      alert('Por favor, escribe la dirección de entrega.');
+      return;
+    }
+    if (!state.cart || !state.cart.length) {
+      alert('Tu carrito está vacío.');
+      return;
+    }
+
+    const items = state.cart.map(i => ({ id:i.id, name:i.name, price:i.price, qty:i.qty }));
+
+    const res = await fetch('./api/create_stripe_checkout.php', {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json' },
+      body: JSON.stringify({ metodo, direccion, items })
+    });
+
+    if (!res.ok){
+      const txt = await res.text();
+      console.error('[Stripe] HTTP', res.status, txt);
+      alert('Error iniciando el pago (HTTP '+res.status+'). Revisa consola.');
+      return;
+    }
+
+    const data = await res.json();
+    if (!data.ok){
+      alert('Stripe: ' + (data.error || 'No se pudo iniciar el pago.'));
+      return;
+    }
+
+    if (typeof Stripe !== 'function'){
+      alert('Stripe.js no se cargó. Agrega <script src="https://js.stripe.com/v3"></script> antes de app.js');
+      return;
+    }
+
+    const stripe = Stripe(data.publishableKey);
+    const { error } = await stripe.redirectToCheckout({ sessionId: data.id });
+    if (error) alert('No se pudo redirigir: ' + error.message);
+  } catch (err) {
+    console.error('[Stripe] Excepción', err);
+    alert('Error iniciando el pago: ' + err.message);
+  }
+}
+
+
+// asegúrate de tener el listener:
+window.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('checkoutBtn')?.addEventListener('click', pagarConTarjeta);
+});
+
+// Asegura que el listener se registre cuando el botón ya existe en el DOM
+// Enganche robusto del botón del carrito (delegación)
+window.addEventListener('DOMContentLoaded', () => {
+  // Log de diagnóstico para confirmar que el JS cargó
+  console.log('[FM] JS listo; conectando botón del carrito');
+
+  // Delegación: funciona aunque el botón se re-dibuje
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('#cartButton');
+    if (btn) {
+      e.preventDefault();
+      e.stopPropagation();
+      toggleCart(true);
+      console.log('[FM] Carrito abierto por botón del header');
+    }
+  });
+});
+
+// Helpers
+function getFulfillMethod() {
+  return document.querySelector("input[name='fulfill']:checked")?.value || 'pickup';
+}
+
+function getDeliveryAddress() {
+  const metodo = getFulfillMethod();
+  if (metodo !== 'delivery') return null;
+  const line1 = document.getElementById('addressInput')?.value.trim() || '';
+  return { linea1: line1 };
+}
+
+// ===================== Mostrar/Ocultar dirección =====================
+
+// Obtiene el método seleccionado
+function getFulfillMethod() {
+  return document.querySelector("input[name='fulfill']:checked")?.value || 'pickup';
+}
+
+// Muestra/oculta el bloque de dirección según el método
+function toggleAddressBlock(){
+  const addressBlock = document.getElementById('addressBlock');
+  const isDelivery = getFulfillMethod() === 'delivery';
+  if (addressBlock) addressBlock.classList.toggle('hidden', !isDelivery);
+}
+
+// Usa la ubicación actual
+function askLocation(){
+  if(!navigator.geolocation){
+    alert('Tu navegador no soporta geolocalización');
+    return;
+  }
+  navigator.geolocation.getCurrentPosition(pos=>{
+    const { latitude, longitude } = pos.coords;
+    const input = document.getElementById('addressInput');
+    if (input) input.value = `Ubicación actual: ${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
+    toggleAddressBlock();
+  }, err=>{
+    alert('No se pudo obtener tu ubicación. Revisa permisos del navegador.');
+  });
+}
+
+// Conecta los listeners una vez cargado el DOM
+document.addEventListener('DOMContentLoaded', () => {
+  // Radios de envío
+  document.querySelectorAll("input[name='fulfill']").forEach(r =>
+    r.addEventListener('change', toggleAddressBlock)
+  );
+
+  // Botón "usar ubicación actual"
+  document.getElementById('useLocationBtn')?.addEventListener('click', (e)=>{
+    e.preventDefault();
+    askLocation();
+  });
+
+  // Estado inicial
+  toggleAddressBlock();
+});
+
+// Listener único del botón de pago
+window.addEventListener('DOMContentLoaded', () => {
+  const btn = document.getElementById('checkoutBtn');
+  if (!btn) {
+    console.warn('[FM] #checkoutBtn no encontrado');
+    return;
+  }
+  btn.addEventListener('click', pagarConTarjeta);
+});
+
+async function pagarConTarjeta(e){
+  e?.preventDefault();
+
+  try {
+    // Validación básica (si pides dirección para envío)
+    const metodo = getFulfillMethod();
+    const direccion = getDeliveryAddress();
+    if (metodo === 'delivery' && (!direccion || !direccion.linea1)) {
+      alert('Por favor, escribe la dirección de entrega.');
+      return;
+    }
+
+    if (!state.cart || !state.cart.length) {
+      alert('Tu carrito está vacío.');
+      return;
+    }
+
+    const items = state.cart.map(i => ({
+      id: i.id, name: i.name, price: i.price, qty: i.qty
+    }));
+
+    console.log('[FM] Iniciando pago…', { metodo, direccion, items });
+
+    const res = await fetch('./api/create_stripe_checkout.php', {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json' },
+      body: JSON.stringify({ metodo, direccion, items })
+    });
+
+    // Ver errores de red
+    if (!res.ok) {
+      const txt = await res.text();
+      console.error('[FM] Error HTTP:', res.status, txt);
+      alert('Error iniciando el pago (HTTP '+res.status+'). Revisa la consola.');
+      return;
+    }
+
+    const data = await res.json();
+    console.log('[FM] Respuesta Stripe:', data);
+
+    if (!data.ok) {
+      alert('Stripe dijo: ' + (data.error || 'No se pudo iniciar el pago.'));
+      return;
+    }
+
+    // Asegura que Stripe.js está cargado
+    if (typeof Stripe !== 'function') {
+      alert('Stripe.js no se cargó. Revisa que tengas <script src="https://js.stripe.com/v3"></script> en index.php');
+      return;
+    }
+
+    const stripe = Stripe(data.publishableKey);
+    const { error } = await stripe.redirectToCheckout({ sessionId: data.id });
+    if (error) {
+      console.error('[FM] Error al redirigir a Checkout:', error);
+      alert('No se pudo redirigir a Stripe: ' + error.message);
+    }
+  } catch (err) {
+    console.error('[FM] Excepción pagarConTarjeta:', err);
+    alert('Error iniciando el pago: ' + err.message);
+  }
+}
+function updateCheckoutBtnText() {
+  const metodo = getFulfillMethod();
+  const btn = document.getElementById('checkoutBtn');
+  if (!btn) return;
+  btn.textContent = (metodo === 'delivery') ? 'Continuar al pago' : 'Crear pedido';
+}
+document.querySelectorAll("input[name='fulfill']").forEach(r =>
+  r.addEventListener('change', updateCheckoutBtnText)
+);
+// Llama una vez al cargar
+updateCheckoutBtnText();
+
+window.renderCart = renderCart;
+window.qty = qty;
+window.removeLine = removeLine;
+window.toggleCart = toggleCart;
+window.addToCart = addToCart;
+window.askLocation = askLocation;
+window.saveProfile = saveProfile;
+window.openAuth = openAuth;
+window.closeAuth = closeAuth;
+window.logout = logout;
+window.showSimple = showSimple;
+
+
+
