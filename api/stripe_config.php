@@ -9,5 +9,5 @@ $STRIPE_PUBLISHABLE = 'pk_test_51SIjBmJkKiqCnW3FrOcXgip7ONeaY8sTp5hZvl5eyqABBrvc
 \Stripe\Stripe::setApiKey($STRIPE_SECRET);
 
 // Dominio local (ajústalo si cambias la carpeta o usas otro host)
-$STRIPE_DOMAIN = 'http://localhost/fruteria-madrid';
+$STRIPE_DOMAIN = 'http://localhost/e-commerceFM';
 ?>

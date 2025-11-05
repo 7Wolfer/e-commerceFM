@@ -63,6 +63,74 @@ button{cursor:pointer;font:inherit}
 .badge{font-size:.75rem;background:#e8f5e9;color:var(--green);border:1px solid #b7dfbe;border-radius:999px;padding:2px 8px}
 
 /* Footer */
+/* Profile styles */
+.profile-header {
+    margin-bottom: 24px;
+}
+
+.profile-meta {
+    margin-top: 8px;
+    color: var(--muted);
+}
+
+.provider-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #f3f4f6;
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 0.875rem;
+}
+
+.profile-form {
+    max-width: 560px;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    padding: 24px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 500;
+    color: var(--dark);
+}
+
+.profile-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid #e5e7eb;
+}
+
+.profile-message {
+    margin-top: 16px;
+    padding: 12px;
+    border-radius: 8px;
+    display: none;
+}
+
+.profile-message.success {
+    display: block;
+    background: #dcfce7;
+    color: var(--green);
+    border: 1px solid #bbf7d0;
+}
+
+.profile-message.error {
+    display: block;
+    background: #fee2e2;
+    color: var(--red);
+    border: 1px solid #fecaca;
+}
+
 .footer{margin-top:40px;border-top:1px solid #e5e7eb;background:#fff}
 .footer .wrap{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:24px;padding:24px 0}
 .footer small{color:#6b7280}
@@ -70,16 +138,183 @@ button{cursor:pointer;font:inherit}
 .footer .pay span{border:1px solid #e5e7eb;border-radius:8px;padding:6px 10px;background:#fafafa}
 
 /* Modals */
-.modal{position:fixed;inset:0;background:rgba(10,15,20,.45);display:none;align-items:center;justify-content:center;padding:16px;z-index:50}
-.modal .sheet{background:#fff;border-radius:20px;border:1px solid #e5e7eb;max-width:720px;width:min(720px,100%);padding:20px}
-.modal.show{display:flex}
-.auth-hero{background:url('./assets/auth-bg.jpg') center/cover;border-radius:16px;min-height:200px;margin-bottom:12px}
-.oauth{display:grid;gap:10px}
-.oauth button{padding:12px 14px;border-radius:12px;border:1px solid #e5e7eb;background:#fff}
-.oauth .google{border-color:#cfe2ff}
-.oauth .facebook{border-color:#dbeafe}
-.oauth .apple{border-color:#e5e7eb}
-.oauth .email{border-color:#fde68a}
+.modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(10,15,20,.45);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    z-index: 50;
+}
+
+.modal.show {
+    display: flex;
+}
+
+.modal .sheet {
+    background: #fff;
+    border-radius: 20px;
+    border: 1px solid #e5e7eb;
+    max-width: 420px;
+    width: 100%;
+    padding: 24px;
+    position: relative;
+    margin: auto;
+}
+
+.modal .close-btn {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: rgba(0,0,0,0.05);
+    border: 1px solid transparent;
+    font-size: 20px;
+    color: var(--muted);
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    padding: 0;
+    line-height: 1;
+}
+
+.modal .close-btn:hover {
+    background: var(--ring);
+    color: var(--green);
+    border-color: var(--green);
+    transform: scale(1.05);
+}
+
+.auth-hero {
+    background: url('./assets/auth-bg.jpg') center/cover;
+    border-radius: 16px;
+    min-height: 160px;
+    margin: -24px -24px 20px;
+}
+
+#authTitle {
+    text-align: center;
+    margin: 0 0 8px;
+    color: var(--dark);
+    font-size: 1.5rem;
+}
+
+.modal p {
+    text-align: center;
+    margin: 0 0 20px;
+    color: var(--muted);
+}
+
+.auth-form {
+    margin: 24px 0;
+}
+
+.auth-form label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 0.9rem;
+    color: var(--dark);
+    font-weight: 500;
+}
+
+.auth-form .input {
+    margin-bottom: 16px;
+    padding: 10px 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    width: 100%;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+}
+
+.auth-form .input:focus {
+    border-color: var(--green);
+    box-shadow: 0 0 0 3px var(--ring);
+    outline: none;
+}
+
+.auth-form .input:invalid {
+    border-color: var(--red);
+}
+
+.auth-form .input:invalid:focus {
+    box-shadow: 0 0 0 3px rgba(214, 58, 47, 0.25);
+}
+
+.auth-form button[type="submit"] {
+    background: var(--green);
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    position: relative;
+    cursor: pointer;
+}
+
+.auth-form button[type="submit"]:hover {
+    background: #256c2b;
+}
+
+.auth-form button[type="submit"]:disabled {
+    background: #4caf50;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+/* Improve error message display */
+.error-message {
+    color: var(--red);
+    font-size: 0.9rem;
+    margin-top: -12px;
+    margin-bottom: 16px;
+    display: none;
+}
+
+.oauth {
+    display: grid;
+    gap: 12px;
+}
+
+.oauth button {
+    padding: 12px 16px;
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
+    background: #fff;
+    width: 100%;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.oauth .google {
+    border-color: #cfe2ff;
+    color: #1a73e8;
+}
+
+.oauth .email {
+    border-color: #fde68a;
+    color: #b45309;
+}
+
+.oauth button:hover {
+    background: #f9fafb;
+    border-color: var(--green);
+    color: var(--green);
+    transform: translateY(-1px);
+}
 
 /* Cart / Checkout */
 .drawer{position:fixed;top:0;right:-420px;width:420px;max-width:90vw;height:100vh;background:#fff;border-left:1px solid #e5e7eb;transition:right .3s ease;z-index:60;display:flex;flex-direction:column}

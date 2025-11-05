@@ -5,8 +5,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Frutería Madrid</title>
-  <link rel="stylesheet" href="/fruteria-madrid/styles.css">
-  <link rel="icon" href="/fruteria-madrid/assets/logoFM.png">
+  <link rel="stylesheet" href="./styles.css">
+  <link rel="icon" href="./assets/logoFM.png">
   <script src="https://js.stripe.com/v3"></script>
 </head>
 <body>
@@ -76,13 +76,32 @@
     </section>
 
     <section id="perfilView" class="hidden">
-      <h2>Mi perfil</h2>
-      <p>Actualiza tu información de contacto.</p>
-      <div style="max-width:560px;display:grid;gap:10px">
-        <input id="pNombre" class="input" placeholder="Nombre completo">
-        <input id="pTelefono" class="input" placeholder="Número de teléfono">
-        <input id="pEmail" class="input" placeholder="Correo">
-        <button class="btn primary" onclick="saveProfile()">Guardar cambios</button>
+      <div class="profile-header">
+        <h2>Mi perfil</h2>
+        <div class="profile-meta">
+          <span class="provider-badge" id="providerBadge"></span>
+        </div>
+      </div>
+      <div class="profile-form">
+        <div class="form-group">
+          <label for="pNombre">Nombre completo</label>
+          <input id="pNombre" class="input" placeholder="Tu nombre completo" required>
+        </div>
+        <div class="form-group">
+          <label for="pEmail">Correo electrónico</label>
+          <input id="pEmail" class="input" placeholder="tu@email.com" type="email" required>
+        </div>
+        <div class="form-group">
+          <label for="pTelefono">Teléfono (opcional)</label>
+          <input id="pTelefono" class="input" placeholder="Número de teléfono" type="tel">
+        </div>
+        <div class="profile-actions">
+          <button class="btn primary" onclick="saveProfile()" id="saveProfileBtn">
+            Guardar cambios
+          </button>
+          <button class="btn" onclick="logout()">Cerrar sesión</button>
+        </div>
+        <div id="profileMessage" class="profile-message"></div>
       </div>
     </section>
 
@@ -141,15 +160,38 @@
   <!-- Auth Modal -->
   <div id="authModal" class="modal" role="dialog" aria-modal="true">
     <div class="sheet">
+      <button class="close-btn" onclick="closeAuth()">&times;</button>
       <div class="auth-hero"></div>
       <h2 id="authTitle">Crear tu cuenta</h2>
       <p>Haz tu súper completo y recibe gratis.</p>
-      <div class="oauth">
+      
+      <!-- Formulario Email/Password -->
+      <form id="authForm" class="auth-form" style="display:none">
+        <div id="nombreGroup">
+          <label>Nombre completo</label>
+          <input type="text" id="authNombre" class="input" required>
+        </div>
+        <div>
+          <label>Email</label>
+          <input type="email" id="authEmail" class="input" required>
+        </div>
+        <div>
+          <label>Contraseña</label>
+          <input type="password" id="authPassword" class="input" required minlength="6">
+        </div>
+        <button type="submit" class="btn primary" style="width:100%">Continuar</button>
+        <p style="text-align:center;margin-top:1rem">
+          <a href="#" id="authToggle">¿Ya tienes cuenta? Inicia sesión</a>
+        </p>
+      </form>
+
+      <!-- Botones OAuth -->
+      <div class="oauth" id="oauthButtons">
         <button class="google" onclick="firebaseLogin('google')">Continuar con Google</button>
-        <button class="email" onclick="firebaseLogin('email')">Continuar con Email</button>
+        <button class="email" onclick="showEmailForm()">Continuar con Email</button>
       </div>
-      <p style="margin-top:8px"><small>Al dar en continuar, declaro que soy mayor de edad y acepto los <a href='#/terminos' onclick="showSimple('Términos y Condiciones')">Términos y Condiciones</a> y <a href='#/privacidad' onclick="showSimple('Avisos de Privacidad')">Políticas de Privacidad</a>.</small></p>
-      <div style="text-align:right"><button class="btn" onclick="closeAuth()">Cerrar</button></div>
+
+      <p style="margin-top:16px;text-align:center"><small>Al dar en continuar, declaro que soy mayor de edad y acepto los <a href='#/terminos' onclick="showSimple('Términos y Condiciones')">Términos y Condiciones</a> y <a href='#/privacidad' onclick="showSimple('Avisos de Privacidad')">Políticas de Privacidad</a>.</small></p>
     </div>
   </div>
 
@@ -217,39 +259,92 @@
 
   async function firebaseLogin(providerName){
     try{
+      console.log('firebaseLogin invoked for provider:', providerName);
       let provider;
       if(providerName==='google') provider = new firebase.auth.GoogleAuthProvider();
       if(providerName==='facebook') provider = new firebase.auth.FacebookAuthProvider();
       if(providerName==='apple') provider = new firebase.auth.OAuthProvider('apple.com');
+
+      let signResult;
       if(providerName==='email'){
         const email = prompt('Correo:');
         const pass = prompt('Contraseña:');
-        await auth.signInWithEmailAndPassword(email, pass)
+        signResult = await auth.signInWithEmailAndPassword(email, pass)
           .catch(async err=>{
             if(err.code==='auth/user-not-found'){
-              await auth.createUserWithEmailAndPassword(email, pass);
+              return await auth.createUserWithEmailAndPassword(email, pass);
             } else { throw err; }
           });
       } else {
-        await auth.signInWithPopup(provider);
+        // use result to get user reliably and for debugging
+        signResult = await auth.signInWithPopup(provider);
+        console.log('Firebase signInWithPopup result:', signResult);
       }
-      const user = auth.currentUser;
+
+      const user = (signResult && signResult.user) ? signResult.user : auth.currentUser;
+      if(!user){
+        alert('No se pudo obtener el usuario desde Firebase. Revisa la consola para más detalles.');
+        console.error('firebaseLogin: no user after sign-in', { signResult, currentUser: auth.currentUser });
+        return;
+      }
+
       const idToken = await user.getIdToken(/* forceRefresh */ true);
+      console.log('firebaseLogin: obtained idToken (truncated):', idToken ? idToken.substr(0,40)+'...' : '<none>');
+
       // Enviar token al backend para VERIFICACIÓN real y crear sesión PHP
       const res = await fetch('./api/login_verify.php', {
         method:'POST',
+        credentials: 'include',
         headers:{'Content-Type':'application/json'},
         body: JSON.stringify({ idToken })
       });
-      if(!res.ok){
-        const err = await res.json().catch(()=>({}));
-        alert('Error de verificación: ' + (err.details || res.status));
+
+      console.log('login_verify HTTP status:', res.status);
+      try{
+        const json = await res.json();
+        console.log('login_verify response JSON:', json);
+        if(!res.ok || !json.ok){
+          alert('Error de verificación: ' + (json.details || json.error || res.status));
+          return;
+        }
+
+        // If backend indicates the user needs to set a password (Google sign-up), prompt to set one
+        if(json.needsPasswordSetup){
+          // Ask for display name (pre-fill with firebase name) and password
+          const desiredName = prompt('Parece que tu cuenta no tiene contraseña. Ingresa tu nombre para mostrar:', user.displayName || json.user.email || '');
+          const desiredPassword = prompt('Elige una contraseña para ingresar con email en el futuro (mínimo 6 caracteres):');
+          if(!desiredPassword || desiredPassword.length < 6){
+            alert('Contraseña no válida. Debe tener al menos 6 caracteres. Puedes configurarla más tarde desde tu perfil.');
+          } else {
+            // send to set_password endpoint
+            const setRes = await fetch('./api/set_password.php', {
+              method: 'POST',
+              credentials: 'include',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ nombre: desiredName, password: desiredPassword })
+            });
+            const setJson = await setRes.json().catch(()=>null);
+            if(setRes.ok && setJson && setJson.ok){
+              alert('Contraseña establecida correctamente. Ahora podrás iniciar sesión con tu correo y la contraseña elegida.');
+            } else {
+              console.error('set_password response:', setRes.status, setJson);
+              alert('No fue posible establecer la contraseña. Revisa la consola y contacta al administrador.');
+            }
+          }
+        }
+
+      } catch(parseErr){
+        const txt = await res.text();
+        console.error('login_verify non-JSON response:', txt);
+        alert('Error de verificación (respuesta no válida). Revisa la consola Network para más detalles.');
         return;
       }
+
       await refreshUserUI();
       closeAuth();
       if(!localStorage.getItem('fm_note_seen')){ document.getElementById('noteModal').classList.add('show'); }
     }catch(e){
+      console.error('firebaseLogin exception:', e);
       alert('Login cancelado o falló: ' + e.message);
     }
   }
@@ -264,7 +359,7 @@
     }
   });
 </script>
-<script src="/fruteria-madrid/app.js"></script>
+<script src="./app.js"></script>
 
 </body>
 </html>

@@ -37,6 +37,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
   nombre VARCHAR(150),
   email VARCHAR(150) UNIQUE,
   telefono VARCHAR(40),
+  password VARCHAR(255),
   creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -85,13 +86,13 @@ INSERT INTO marcas (nombre) VALUES
 ('Justo Frescos'),('Mr. Lucky'),('Campo Vivo'),('Justo'),('Earthbound'),('Del Desierto');
 
 INSERT INTO productos (sku, nombre, categoria_id, marca_id, precio, unidad, imagen, nuevo, oferta, organico) VALUES
-('uva-verde','Uva Verde sin Semilla Selecta',1,1,128.99,'/kg','https://images.unsplash.com/photo-1514539079130-25950c84af65?w=600',1,0,0),
-('jitomate-saladette','Jitomate Saladette Mini',2,2,22.90,'/kg','https://images.unsplash.com/photo-1506806732259-39c2d0268443?w=600',0,1,0),
-('limon-semilla','Limón con Semilla',1,3,20.10,'/kg','https://images.unsplash.com/photo-1508747703725-719777637510?w=600',0,0,0),
-('mandarina','Mandarina',1,4,7.91,'/200g','https://images.unsplash.com/photo-1547514701-42782101795e?w=600',1,0,0),
-('platano-chiapas','Plátano Chiapas Selecto',1,1,26.90,'/kg','https://images.unsplash.com/photo-1571772805064-207c8435df79?w=600',0,0,0),
-('zanahoria','Zanahoria Selecta',2,4,19.90,'/kg','https://images.unsplash.com/photo-1563565375-f3fdfdbefa83?w=600',0,0,0),
-('cebolla-blanca','Cebolla Blanca',2,3,34.80,'/kg','https://images.unsplash.com/photo-1518977676601-b53f82aba655?w=600',0,0,1),
-('aguacate-hass','Aguacate Hass',1,3,106.60,'/kg','https://images.unsplash.com/photo-1546470427-0fd5d0c6c6be?w=600',1,0,1),
-('espinaca','Espinaca Orgánica',2,5,139.90,'/454g','https://images.unsplash.com/photo-1472148439583-1f2f6e43b2c5?w=600',0,0,1),
-('datil-medjool','Dátil Medjool Orgánico',3,6,279.93,'/908g','https://images.unsplash.com/photo-1526318472351-c75fcf070305?w=600',0,0,1);
+('uva-verde','Uva Verde sin Semilla Selecta',1,1,128.99,'/kg','http:\\localhost\e-commerceFM\assets\img\productos\uvaVerdeSelecta.jpg',1,0,0),
+('jitomate-saladette','Jitomate Saladette Mini',2,2,22.90,'/kg','http:\\localhost\e-commerceFM\assets\img\productos\jitomateSaladetMini.jpg',0,1,0),
+('limon-semilla','Limón con Semilla',1,3,20.10,'/kg','http:\\localhost\e-commerceFM\assets\img\productos\limon.jpg',0,0,0),
+('mandarina','Mandarina',1,4,7.91,'/200g','http:\\localhost\e-commerceFM\assets\img\productos\mandarina.jpg',1,0,0),
+('platano-chiapas','Plátano Chiapas Selecto',1,1,26.90,'/kg','http:\\localhost\e-commerceFM\assets\img\productos\platanoChiapasSelecto.jpg',0,0,0),
+('zanahoria','Zanahoria Selecta',2,4,19.90,'/kg','http:\\localhost\e-commerceFM\assets\img\productos\zanahoriaSelecta.jpg',0,0,0),
+('cebolla-blanca','Cebolla Blanca',2,3,34.80,'/kg','http:\\localhost\e-commerceFM\assets\img\productos\cebollaBlanca.jpg',0,0,1),
+('aguacate-hass','Aguacate Hass',1,3,106.60,'/kg','http:\\localhost\e-commerceFM\assets\img\productos\aguacateHass.jpg',1,0,1),
+('espinaca','Espinaca Orgánica',2,5,139.90,'/454g','http:\\localhost\e-commerceFM\assets\img\productos\espinacaOrganica.jpg',0,0,1),
+('datil-medjool','Dátil Medjool Orgánico',3,6,279.93,'/908g','http:\\localhost\e-commerceFM\assets\img\productos\datil.jpg',0,0,1);

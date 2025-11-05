@@ -1,0 +1,24 @@
+{
+  "name": "e-commercefm",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/7Wolfer/e-commerceFM.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/7Wolfer/e-commerceFM/issues"
+  },
+  "homepage": "https://github.com/7Wolfer/e-commerceFM#readme",
+  "devDependencies": {
+    "cypress": "^15.5.0"
+  }
+}

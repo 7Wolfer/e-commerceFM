@@ -30,6 +30,10 @@ function navigate(view){
   $('#perfilView').classList.toggle('hidden', view!=='perfil');
   $('#simplePage').classList.toggle('hidden', view!=='simple');
   if(view==='catalogo') window.scrollTo({top:0,behavior:'smooth'});
+  if(view==='perfil'){
+    // ensure profile data is fresh when opening the profile view
+    refreshUserUI().catch(err=>console.error('Error loading profile:',err));
+  }
 }
 
 /* Departments */
@@ -212,24 +216,186 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 /* Auth & Profile via PHP */
-function openAuth(isRegister=false){ $('#authTitle').textContent = isRegister? 'Crear tu cuenta' : 'Iniciar sesión'; $('#authModal').classList.add('show'); }
-function closeAuth(){ $('#authModal').classList.remove('show'); }
+function openAuth(isRegister=false){ 
+  state.isRegister = isRegister;
+  $('#authTitle').textContent = isRegister? 'Crear tu cuenta' : 'Iniciar sesión';
+  $('#authModal').classList.add('show');
+  $('#authForm').style.display = 'none';
+  $('#oauthButtons').style.display = 'grid';
+  $('#nombreGroup').style.display = isRegister ? 'block' : 'none';
+  $('#authToggle').textContent = isRegister ? '¿Ya tienes cuenta? Inicia sesión' : '¿No tienes cuenta? Regístrate';
+}
+
+function closeAuth(){ 
+  $('#authModal').classList.remove('show');
+  $('#authForm').reset();
+}
+
+function showEmailForm(){
+  $('#oauthButtons').style.display = 'none';
+  $('#authForm').style.display = 'block';
+}
+
+async function submitAuth(e){
+  e.preventDefault();
+  const email = $('#authEmail').value.trim();
+  const password = $('#authPassword').value;
+  const nombre = $('#authNombre').value.trim();
+  
+  if (state.isRegister && !nombre) {
+    alert('Por favor ingresa tu nombre completo');
+    return;
+  }
+
+  if (!email) {
+    alert('Por favor ingresa tu email');
+    return;
+  }
+
+  if (!password || password.length < 6) {
+    alert('La contraseña debe tener al menos 6 caracteres');
+    return;
+  }
+  
+  try {
+    const endpoint = state.isRegister ? './api/register.php' : './api/login.php';
+    const body = state.isRegister ? 
+      JSON.stringify({ email, password, nombre }) : 
+      JSON.stringify({ email, password });
+      
+    const submitButton = $('button[type="submit"]');
+    const originalText = submitButton.textContent;
+    submitButton.textContent = state.isRegister ? 'Creando cuenta...' : 'Ingresando...';
+    submitButton.disabled = true;
+
+    try {
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body
+      });
+
+      let data;
+      try {
+        data = await res.json();
+      } catch (e) {
+        console.error('Error parsing JSON response:', e);
+        throw new Error('Error en el servidor. Por favor intenta más tarde.');
+      }
+
+      if (!res.ok || !data.ok) {
+        const error = data.error || 'Error en la autenticación';
+        if (error.includes('email ya está registrado')) {
+          throw new Error('Este email ya está registrado. ¿Deseas iniciar sesión?');
+        }
+        throw new Error(error);
+      }
+
+      await refreshUserUI();
+      closeAuth();
+      if(!localStorage.getItem('fm_note_seen')){ 
+        $('#noteModal').classList.add('show'); 
+      }
+    } finally {
+      submitButton.textContent = originalText;
+      submitButton.disabled = false;
+    }
+    
+  } catch (err) {
+    console.error('Auth error:', err);
+    alert(err.message);
+  }
+}
+
+// Conectar formulario
+document.addEventListener('DOMContentLoaded', () => {
+  $('#authForm')?.addEventListener('submit', submitAuth);
+  $('#authToggle')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    state.isRegister = !state.isRegister;
+    $('#authTitle').textContent = state.isRegister ? 'Crear tu cuenta' : 'Iniciar sesión';
+    $('#nombreGroup').style.display = state.isRegister ? 'block' : 'none';
+    $('#authToggle').textContent = state.isRegister ? '¿Ya tienes cuenta? Inicia sesión' : '¿No tienes cuenta? Regístrate';
+  });
+});
+
 async function fakeLogin(provider){
-  await fetch(`/fruteria-madrid/api/login.php?provider=${provider}`);
+  await fetch(`./api/login.php?provider=${provider}`);
   await refreshUserUI();
   closeAuth();
   if(!localStorage.getItem('fm_note_seen')){ $('#noteModal').classList.add('show'); }
 }
-async function logout(){ await fetch('/fruteria-madrid/api/logout.php'); await refreshUserUI(); }
+async function logout(){ await fetch('./api/logout.php'); await refreshUserUI(); }
 async function refreshUserUI(){
-  const res = await fetch('/fruteria-madrid/api/me.php');
-  if(res.status===200){ state.user = await res.json(); $('#loginBtn').classList.add('hidden'); $('#registerBtn').classList.add('hidden'); $('#logoutBtn').classList.remove('hidden'); }
-  else { state.user=null; $('#logoutBtn').classList.add('hidden'); $('#loginBtn').classList.remove('hidden'); $('#registerBtn').classList.remove('hidden'); }
+  try {
+    const res = await fetch('./api/me.php');
+    const data = await res.json();
+    
+    if (res.ok) {
+      state.user = data;
+      $('#loginBtn').classList.add('hidden');
+      $('#registerBtn').classList.add('hidden');
+      $('#logoutBtn').classList.remove('hidden');
+      
+      // Actualizar campos del perfil
+      if ($('#perfilView').classList.contains('hidden') === false) {
+        $('#pNombre').value = data.nombre || '';
+        $('#pEmail').value = data.email || '';
+        $('#pTelefono').value = data.telefono || '';
+        
+        // Mostrar badge del proveedor de autenticación
+        const providerIcon = data.provider === 'google' ? '🔵' : '✉️';
+        $('#providerBadge').textContent = `${providerIcon} Cuenta con ${data.provider}`;
+      }
+    } else {
+      state.user = null;
+      $('#logoutBtn').classList.add('hidden');
+      $('#loginBtn').classList.remove('hidden');
+      $('#registerBtn').classList.remove('hidden');
+    }
+  } catch (err) {
+    console.error('Error refreshing user UI:', err);
+  }
 }
 async function saveProfile(){
-  const body = JSON.stringify({ nombre: $('#pNombre').value, telefono: $('#pTelefono').value, email: $('#pEmail').value });
-  await fetch('/fruteria-madrid/api/profile.php', {method:'POST', body});
-  alert('Perfil actualizado');
+  const saveBtn = $('#saveProfileBtn');
+  const message = $('#profileMessage');
+  
+  try {
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Guardando...';
+    
+    const body = JSON.stringify({
+      nombre: $('#pNombre').value.trim(),
+      telefono: $('#pTelefono').value.trim(),
+      email: $('#pEmail').value.trim()
+    });
+    
+    const res = await fetch('./api/profile.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body
+    });
+    
+    const data = await res.json();
+    
+    if (res.ok) {
+      message.className = 'profile-message success';
+      message.textContent = '✅ Perfil actualizado correctamente';
+      await refreshUserUI();
+    } else {
+      throw new Error(data.error || 'Error al actualizar el perfil');
+    }
+  } catch (err) {
+    message.className = 'profile-message error';
+    message.textContent = '❌ ' + err.message;
+  } finally {
+    saveBtn.disabled = false;
+    saveBtn.textContent = 'Guardar cambios';
+    setTimeout(() => {
+      message.style.display = 'none';
+    }, 5000);
+  }
 }
 
 /* Notifications placeholder */
@@ -243,7 +409,7 @@ function showSimple(title){ navigate('simple'); $('#simpleContent').innerHTML = 
 async function init(){
   buildDepartments();
   await refreshUserUI();
-  const prodRes = await fetch('/fruteria-madrid/api/products.php'); state.products = await prodRes.json();
+  const prodRes = await fetch('./api/products.php'); state.products = await prodRes.json();
   buildFilters();
   renderProducts();
   renderCartCount();
