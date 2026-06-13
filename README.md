@@ -1,11 +1,34 @@
 # Frutería Madrid 🥑
 
+![PHP](https://img.shields.io/badge/PHP-777BB4?logo=php&logoColor=white)
+![MySQL](https://img.shields.io/badge/MySQL-4479A1?logo=mysql&logoColor=white)
+![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?logo=javascript&logoColor=black)
+![Firebase](https://img.shields.io/badge/Firebase_Auth-FFCA28?logo=firebase&logoColor=black)
+![Stripe](https://img.shields.io/badge/Stripe-635BFF?logo=stripe&logoColor=white)
+
 A full-stack e-commerce web app for an online grocery / fruit store. Customers can
 browse a product catalog by department, filter items, add them to a cart, sign in with
 Firebase Authentication, and check out — either by **picking up and paying in store** or
 by **paying online with Stripe** for home delivery.
 
 > Prices are in **MXN** and the store is based in Hermosillo, Sonora (Mexico).
+> 🔗 **Live demo:** runs locally for now — see the **Roadmap** for deployment options.
+
+---
+
+## 📸 Screenshots
+
+> Screenshots coming soon. To add them, drop PNGs into `docs/screenshots/` and uncomment
+> the block below. For a GIF demo, record with Kap (macOS) / ScreenToGif (Windows) and
+> save it as `docs/screenshots/demo.gif`.
+
+<!--
+| Catalog | Department filtering | Cart |
+| --- | --- | --- |
+| ![Catalog](docs/screenshots/catalogo.png) | ![Filtering](docs/screenshots/filtros.png) | ![Cart](docs/screenshots/carrito.png) |
+
+![Demo](docs/screenshots/demo.gif)
+-->
 
 ---
 
@@ -163,6 +186,21 @@ http://localhost/fruteria-madrid/index.php
 
 ---
 
+## 🔐 How authentication works
+
+Login uses Firebase on the client but is **verified on the server** — the browser never
+decides who is logged in:
+
+1. The user signs in with Google or Email/Password via the Firebase JS SDK (in `index.php`).
+2. The client gets a Firebase **ID token** and POSTs it to `api/login_verify.php`.
+3. The server verifies the token with the Firebase Admin SDK (`kreait/firebase-php`) and,
+   only if it's valid, creates the PHP session and upserts the user into the `usuarios` table.
+4. `api/me.php` and `api/logout.php` read and destroy that session.
+
+A forged request therefore cannot create a session without a valid Firebase token.
+
+---
+
 ## 🗄️ Database Schema (overview)
 
 - **`categorias`** / **`marcas`** — product categories and brands.
@@ -199,7 +237,25 @@ account** and **Stripe secret key** grant privileged access and must be kept pri
 
 ---
 
+## 🗺️ Roadmap
+
+Known limitations and planned improvements:
+
+- [ ] **Deploy a live demo** on a PHP + MySQL host (Railway, Render, InfinityFree) and link it here.
+- [ ] **Touch-friendly mega-menu** — the department panel currently opens on hover only.
+- [ ] **Stripe webhook** (`checkout.session.completed`) so orders persist even if the user closes the tab, with idempotency to avoid duplicates.
+- [ ] **Admin panel** to manage products, categories, and orders.
+- [ ] **Order history** for logged-in users.
+- [ ] **Server-side validation & CSRF protection** on POST endpoints.
+- [ ] **Escape all dynamic HTML** (replace remaining `innerHTML` with safe rendering).
+- [ ] **Relative base paths** so the app isn't tied to the `/fruteria-madrid/` URL.
+- [ ] **Automated tests** (PHPUnit + a few front-end tests).
+- [ ] **Local product images** instead of external URLs.
+
+**Recently shipped:** ✅ mega-menu catalog filtering · ✅ server-side price validation · ✅ secrets removed from version control.
+
+---
+
 ## 📄 License
 
-This project is provided as-is for educational/demo purposes. Add a license file if you
-intend to distribute it.
+Released under the [MIT License](LICENSE) — free to use, modify, and learn from.
