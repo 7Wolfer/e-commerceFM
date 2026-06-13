@@ -147,11 +147,6 @@ function removeLine(i){
   renderCart();
 }
 
-/* Total */
-function sumCart(){
-  return state.cart.reduce((a,l) => a + l.qty * l.price, 0);
-}
-
 /* Contador del ícono del carrito */
 function updateCartCount(){
   const n = state.cart.reduce((a,l) => a + l.qty, 0);
@@ -197,16 +192,6 @@ function toggleCart(open){
   if (open) renderCart();
 }
 
-/* Ubicación */
-function askLocation(){
-  if (!navigator.geolocation){ alert('Tu navegador no soporta geolocalización'); return; }
-  navigator.geolocation.getCurrentPosition(pos=>{
-    const {latitude, longitude} = pos.coords;
-    const input = document.getElementById('addressInput');
-    if (input) input.value = `Ubicación actual: ${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
-  }, ()=> alert('No se pudo obtener tu ubicación. Revisa permisos del navegador.'));
-}
-
 /* Enlaces/Listeners ÚNICOS */
 document.addEventListener('DOMContentLoaded', () => {
   // Botón del icono del carrito (header)
@@ -230,12 +215,6 @@ document.addEventListener('DOMContentLoaded', () => {
 /* Auth & Profile via PHP */
 function openAuth(isRegister=false){ $('#authTitle').textContent = isRegister? 'Crear tu cuenta' : 'Iniciar sesión'; $('#authModal').classList.add('show'); }
 function closeAuth(){ $('#authModal').classList.remove('show'); }
-async function fakeLogin(provider){
-  await fetch(`/fruteria-madrid/api/login.php?provider=${provider}`);
-  await refreshUserUI();
-  closeAuth();
-  if(!localStorage.getItem('fm_note_seen')){ $('#noteModal').classList.add('show'); }
-}
 async function logout(){ await fetch('/fruteria-madrid/api/logout.php'); await refreshUserUI(); }
 async function refreshUserUI(){
   const res = await fetch('/fruteria-madrid/api/me.php');
@@ -267,11 +246,6 @@ async function init(){
 }
 init();
 
-async function loadMeta(){
-  const res = await fetch('./api/meta.php'); const meta = await res.json();
-  state.meta = meta;
-}
-
 async function createOrder(){
   const metodo = document.querySelector("input[name='fulfill']:checked").value;
   const address = (metodo==='delivery') ? { linea1: document.getElementById('addressInput').value } : null;
@@ -301,78 +275,6 @@ async function onCheckoutClick(e){
   }
 }
 
-async function pagarConTarjeta(e){
-  e?.preventDefault();
-
-  try {
-    const metodo = document.querySelector("input[name='fulfill']:checked")?.value || 'pickup';
-    const direccion = (metodo === 'delivery')
-      ? { linea1: document.getElementById('addressInput')?.value.trim() || '' }
-      : null;
-
-    if (metodo === 'delivery' && (!direccion || !direccion.linea1)) {
-      alert('Por favor, escribe la dirección de entrega.');
-      return;
-    }
-    if (!state.cart || !state.cart.length) {
-      alert('Tu carrito está vacío.');
-      return;
-    }
-
-    const items = state.cart.map(i => ({ id:i.id, name:i.name, price:i.price, qty:i.qty }));
-
-    const res = await fetch('./api/create_stripe_checkout.php', {
-      method: 'POST',
-      headers: { 'Content-Type':'application/json' },
-      body: JSON.stringify({ metodo, direccion, items })
-    });
-
-    if (!res.ok){
-      const txt = await res.text();
-      console.error('[Stripe] HTTP', res.status, txt);
-      alert('Error iniciando el pago (HTTP '+res.status+'). Revisa consola.');
-      return;
-    }
-
-    const data = await res.json();
-    if (!data.ok){
-      alert('Stripe: ' + (data.error || 'No se pudo iniciar el pago.'));
-      return;
-    }
-
-    if (typeof Stripe !== 'function'){
-      alert('Stripe.js no se cargó. Agrega <script src="https://js.stripe.com/v3"></script> antes de app.js');
-      return;
-    }
-
-    const stripe = Stripe(data.publishableKey);
-    const { error } = await stripe.redirectToCheckout({ sessionId: data.id });
-    if (error) alert('No se pudo redirigir: ' + error.message);
-  } catch (err) {
-    console.error('[Stripe] Excepción', err);
-    alert('Error iniciando el pago: ' + err.message);
-  }
-}
-
-
-// Asegura que el listener se registre cuando el botón ya existe en el DOM
-// Enganche robusto del botón del carrito (delegación)
-window.addEventListener('DOMContentLoaded', () => {
-  // Log de diagnóstico para confirmar que el JS cargó
-  console.log('[FM] JS listo; conectando botón del carrito');
-
-  // Delegación: funciona aunque el botón se re-dibuje
-  document.addEventListener('click', (e) => {
-    const btn = e.target.closest('#cartButton');
-    if (btn) {
-      e.preventDefault();
-      e.stopPropagation();
-      toggleCart(true);
-      console.log('[FM] Carrito abierto por botón del header');
-    }
-  });
-});
-
 // Helpers
 function getFulfillMethod() {
   return document.querySelector("input[name='fulfill']:checked")?.value || 'pickup';
@@ -386,11 +288,6 @@ function getDeliveryAddress() {
 }
 
 // ===================== Mostrar/Ocultar dirección =====================
-
-// Obtiene el método seleccionado
-function getFulfillMethod() {
-  return document.querySelector("input[name='fulfill']:checked")?.value || 'pickup';
-}
 
 // Muestra/oculta el bloque de dirección según el método
 function toggleAddressBlock(){

@@ -1,7 +1,7 @@
 <?php
 // Página de éxito: valida la Checkout Session y crea el pedido en la BD
-require_once __DIR__ . '/api/stripe_config.php';
-require_once __DIR__ . '/api/config.php'; // mysqli
+require_once __DIR__ . '/stripe_config.php';
+require_once __DIR__ . '/config.php'; // mysqli
 session_start();
 
 $session_id = $_GET['session_id'] ?? null;
