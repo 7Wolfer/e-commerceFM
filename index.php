@@ -5,8 +5,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Frutería Madrid</title>
-  <link rel="stylesheet" href="/fruteria-madrid/styles.css">
-  <link rel="icon" href="/fruteria-madrid/assets/logoFM.png">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="icon" href="assets/logoFM.png">
   <script src="https://js.stripe.com/v3"></script>
 </head>
 <body>
@@ -190,8 +190,6 @@
       </div>
       <div class="total"><span>Total</span><span id="totalPrice">$0.00</span></div>
       <button class="btn primary" id="checkoutBtn">Continuar al pago</button>
-
-      <small>El pago con tarjeta se integrará más adelante (Stripe / Mercado Pago).</small>
     </div>
   </aside>
 
@@ -264,7 +262,7 @@
     }
   });
 </script>
-<script src="/fruteria-madrid/app.js"></script>
+<script src="app.js"></script>
 
 </body>
 </html>

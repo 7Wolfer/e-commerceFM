@@ -31,6 +31,7 @@ function navigate(view){
   $('#perfilView').classList.toggle('hidden', view!=='perfil');
   $('#simplePage').classList.toggle('hidden', view!=='simple');
   if(view==='catalogo') window.scrollTo({top:0,behavior:'smooth'});
+  if(view==='perfil') loadProfile();
 }
 
 /* Departments */
@@ -97,6 +98,7 @@ function setMegaFilter(label, opts = {}){
     tag:  opts.tag  || null
   };
   resetSidebar();
+  document.querySelector('.mega')?.classList.remove('open'); // cierra el panel en móvil
   navigate('catalogo');
   renderProducts();
   setCatalogTitle(label);
@@ -133,6 +135,15 @@ function setCatalogTitle(label){
 function escapeHtml(s){
   return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
+
+// Mega-menú: abrir/cerrar con clic (para móvil/táctil; en escritorio sigue el hover).
+document.addEventListener('DOMContentLoaded', () => {
+  const mega = document.querySelector('.mega');
+  const trigger = document.querySelector('.mega-trigger');
+  if (!mega || !trigger) return;
+  trigger.addEventListener('click', (e) => { e.stopPropagation(); mega.classList.toggle('open'); });
+  document.addEventListener('click', (e) => { if (!mega.contains(e.target)) mega.classList.remove('open'); });
+});
 
 /* Filters */
 function buildFilters(){
@@ -296,15 +307,27 @@ document.addEventListener('DOMContentLoaded', () => {
 /* Auth & Profile via PHP */
 function openAuth(isRegister=false){ $('#authTitle').textContent = isRegister? 'Crear tu cuenta' : 'Iniciar sesión'; $('#authModal').classList.add('show'); }
 function closeAuth(){ $('#authModal').classList.remove('show'); }
-async function logout(){ await fetch('/fruteria-madrid/api/logout.php'); await refreshUserUI(); }
+async function logout(){ await fetch('./api/logout.php'); await refreshUserUI(); }
 async function refreshUserUI(){
-  const res = await fetch('/fruteria-madrid/api/me.php');
+  const res = await fetch('./api/me.php');
   if(res.status===200){ state.user = await res.json(); $('#loginBtn').classList.add('hidden'); $('#registerBtn').classList.add('hidden'); $('#logoutBtn').classList.remove('hidden'); }
   else { state.user=null; $('#logoutBtn').classList.add('hidden'); $('#loginBtn').classList.remove('hidden'); $('#registerBtn').classList.remove('hidden'); }
 }
+async function loadProfile(){
+  try{
+    const res = await fetch('./api/profile.php');
+    if(!res.ok) return;
+    const u = await res.json();
+    if(!u) return;
+    const set = (id, v) => { const el = document.getElementById(id); if(el) el.value = v || ''; };
+    set('pNombre', u.nombre);
+    set('pTelefono', u.telefono);
+    set('pEmail', u.email);
+  }catch(e){ /* perfil no disponible (invitado) */ }
+}
 async function saveProfile(){
   const body = JSON.stringify({ nombre: $('#pNombre').value, telefono: $('#pTelefono').value, email: $('#pEmail').value });
-  await fetch('/fruteria-madrid/api/profile.php', {method:'POST', body});
+  await fetch('./api/profile.php', {method:'POST', body});
   alert('Perfil actualizado');
 }
 
@@ -319,7 +342,7 @@ function showSimple(title){ navigate('simple'); $('#simpleContent').innerHTML = 
 async function init(){
   buildDepartments();
   await refreshUserUI();
-  const prodRes = await fetch('/fruteria-madrid/api/products.php'); state.products = await prodRes.json();
+  const prodRes = await fetch('./api/products.php'); state.products = await prodRes.json();
   buildFilters();
   renderProducts();
   renderCartCount();
