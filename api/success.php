@@ -54,11 +54,9 @@ foreach ($session->line_items->data as $li) {
 }
 $payment_id = $session->payment_intent->id ?? null;
 
-$insP = $mysqli->prepare("INSERT INTO pedidos (usuario_id, metodo, total, estatus, payment_id) VALUES (?,?,?,?,?)");
-$estatus = 'pagado';
-$metodo_pago = 'tarjeta';
-$sum = $total;
-$insP->bind_param('isdss', $user_db_id, $metodo_pago, $sum, $estatus, $payment_id);
+$insP = $mysqli->prepare("INSERT INTO pedidos (usuario_id, total, metodo, estado, payment_id) VALUES (?,?,?,?,?)");
+$estado = 'pagado';
+$insP->bind_param('idsss', $user_db_id, $total, $metodo, $estado, $payment_id);
 $insP->execute();
 $pedido_id = $insP->insert_id;
 
@@ -81,7 +79,7 @@ foreach ($session->line_items->data as $li) {
   $name = $li->description;
   $qty  = $li->quantity;
   $price= $li->amount_subtotal/100.0 / max(1,$qty);
-  $insI = $mysqli->prepare("INSERT INTO pedido_items (pedido_id, nombre, cantidad, precio_unitario) VALUES (?,?,?,?)");
+  $insI = $mysqli->prepare("INSERT INTO pedido_items (pedido_id, nombre, cantidad, precio) VALUES (?,?,?,?)");
   $insI->bind_param('isid', $pedido_id, $name, $qty, $price);
   $insI->execute();
 }

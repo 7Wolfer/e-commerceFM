@@ -27,8 +27,8 @@ if($metodo==='delivery' && $direccion){
   $ci = $direccion['ciudad'] ?? '';
   $es = $direccion['estado'] ?? '';
   $cp = $direccion['cp'] ?? '';
-  $lat = isset($direccion['lat'])? floatval($direccion['lat']): None;
-  $lng = isset($direccion['lng'])? floatval($direccion['lng']): None;
+  $lat = isset($direccion['lat'])? floatval($direccion['lat']): null;
+  $lng = isset($direccion['lng'])? floatval($direccion['lng']): null;
   $insD->bind_param('isssssdd',$usuario_id,$et,$l1,$ci,$es,$cp,$lat,$lng);
   $insD->execute();
   $direccion_id = $insD->insert_id;

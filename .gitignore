@@ -1,0 +1,16 @@
+# Composer dependencies (reinstall with `composer install`)
+/vendor/
+
+# Secrets / local config — never commit these
+/api/firebase-service-account.json
+/api/stripe_config.php
+
+# macOS
+.DS_Store
+
+# Editor / temp
+*.swp
+*~
+
+# Logs
+*.log

@@ -61,6 +61,7 @@ CREATE TABLE IF NOT EXISTS pedidos (
   metodo VARCHAR(40) DEFAULT 'pickup', -- pickup|delivery
   direccion_id INT,
   estado VARCHAR(30) DEFAULT 'pendiente',
+  payment_id VARCHAR(255) DEFAULT NULL,
   creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (usuario_id) REFERENCES usuarios(id),
   FOREIGN KEY (direccion_id) REFERENCES direcciones(id)
@@ -69,7 +70,7 @@ CREATE TABLE IF NOT EXISTS pedidos (
 CREATE TABLE IF NOT EXISTS pedido_items (
   id INT AUTO_INCREMENT PRIMARY KEY,
   pedido_id INT NOT NULL,
-  producto_id INT NOT NULL,
+  producto_id INT NULL,
   nombre VARCHAR(200),
   precio DECIMAL(10,2),
   cantidad INT DEFAULT 1,

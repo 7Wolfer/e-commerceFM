@@ -40,18 +40,34 @@ function buildDepartments(){
     const li = document.createElement('li');
     li.textContent = name;
     li.className = i===0? 'active':'';
-    li.addEventListener('mouseenter',()=>{ $$('.mega-list li').forEach(n=>n.classList.remove('active')); li.classList.add('active'); showSubcats(name); });
+    li.addEventListener('mouseenter',()=>{ $$('.mega-list li').forEach(n=>n.classList.remove('active')); 
+    li.classList.add('active'); 
+    showSubcats(name); });
     list.appendChild(li);
   });
   showSubcats(names[0]);
 }
+
 function showSubcats(name){
-  const sub = $('#subcats'); sub.innerHTML='';
-  (state.departments[name]||[]).forEach(s=>{
-    const a = document.createElement('a'); a.href='#'; a.textContent=s; a.onclick=(e)=>e.preventDefault();
+  const sub = $('#subcats');
+  sub.innerHTML = '';
+
+  // 1) Siempre pinto "Ver todos" primero
+  const all = document.createElement('a');
+  all.href = '#';
+  all.textContent = 'Ver todos';
+  all.onclick = e => e.preventDefault();
+  sub.appendChild(all);
+
+  // 2) Pinto el resto, ignorando cualquier "Ver todos" que venga del array
+  (state.departments[name] || []).forEach(s => {
+    if (String(s).trim().toLowerCase() === 'ver todos') return; // evita duplicado
+    const a = document.createElement('a');
+    a.href = '#';
+    a.textContent = s;
+    a.onclick = e => e.preventDefault();
     sub.appendChild(a);
   });
-  const all = document.createElement('a'); all.href='#'; all.textContent='Ver todos'; sub.prepend(all);
 }
 
 /* Filters */
@@ -339,11 +355,6 @@ async function pagarConTarjeta(e){
 }
 
 
-// asegúrate de tener el listener:
-window.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('checkoutBtn')?.addEventListener('click', pagarConTarjeta);
-});
-
 // Asegura que el listener se registre cuando el botón ya existe en el DOM
 // Enganche robusto del botón del carrito (delegación)
 window.addEventListener('DOMContentLoaded', () => {
@@ -419,16 +430,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Estado inicial
   toggleAddressBlock();
-});
-
-// Listener único del botón de pago
-window.addEventListener('DOMContentLoaded', () => {
-  const btn = document.getElementById('checkoutBtn');
-  if (!btn) {
-    console.warn('[FM] #checkoutBtn no encontrado');
-    return;
-  }
-  btn.addEventListener('click', pagarConTarjeta);
 });
 
 async function pagarConTarjeta(e){
