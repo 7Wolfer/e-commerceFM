@@ -18,7 +18,8 @@ const state = {
     'Congelados': ['Ver todos','Frutas y Verduras Congeladas','Listos para Comer','Helados y Postres'],
     'Salchichonería': ['Ver todos','Jamón y Pechuga','Carnes Frías','Especialidades','Embutidos','Salchichas','Tocino']
   },
-  products: []
+  products: [],
+  mega: null   // filtro activo del mega-menú: { label, cats:Set, tag } | null
 };
 
 function saveCart(){ localStorage.setItem('fm_cart', JSON.stringify(state.cart)); renderCartCount(); }
@@ -43,6 +44,7 @@ function buildDepartments(){
     li.addEventListener('mouseenter',()=>{ $$('.mega-list li').forEach(n=>n.classList.remove('active')); 
     li.classList.add('active'); 
     showSubcats(name); });
+    li.addEventListener('click',()=> setMegaFilter(name, { cats: deptCats(name) }));
     list.appendChild(li);
   });
   showSubcats(names[0]);
@@ -56,7 +58,7 @@ function showSubcats(name){
   const all = document.createElement('a');
   all.href = '#';
   all.textContent = 'Ver todos';
-  all.onclick = e => e.preventDefault();
+  all.onclick = e => { e.preventDefault(); setMegaFilter(name, { cats: deptCats(name) }); };
   sub.appendChild(all);
 
   // 2) Pinto el resto, ignorando cualquier "Ver todos" que venga del array
@@ -65,9 +67,71 @@ function showSubcats(name){
     const a = document.createElement('a');
     a.href = '#';
     a.textContent = s;
-    a.onclick = e => e.preventDefault();
+    a.onclick = e => { e.preventDefault(); pickSubcat(s); };
     sub.appendChild(a);
   });
+}
+
+/* ---- Mega-menú: filtrado real del catálogo ---- */
+
+// Categorías que cubre un departamento (su nombre + sus subcategorías), en minúsculas.
+function deptCats(name){
+  const subs = (state.departments[name] || []).filter(s => s.toLowerCase() !== 'ver todos');
+  return [name, ...subs];
+}
+
+// Click en una subcategoría: algunas son "tags" (orgánico/nuevo/oferta); el resto, categoría.
+function pickSubcat(label){
+  const low = label.toLowerCase();
+  if (low.startsWith('orgánico') || low.startsWith('organico')) return setMegaFilter(label, { tag:'organico' });
+  if (low.startsWith('nuevo'))   return setMegaFilter(label, { tag:'nuevo' });
+  if (low.startsWith('promo') || low.startsWith('oferta')) return setMegaFilter(label, { tag:'oferta' });
+  setMegaFilter(label, { cats:[label] });
+}
+
+// Aplica un filtro del mega-menú y limpia el sidebar para que no se contradigan.
+function setMegaFilter(label, opts = {}){
+  state.mega = {
+    label,
+    cats: opts.cats ? new Set(opts.cats.map(c => String(c).toLowerCase())) : null,
+    tag:  opts.tag  || null
+  };
+  resetSidebar();
+  navigate('catalogo');
+  renderProducts();
+  setCatalogTitle(label);
+}
+
+// Quita todos los filtros (mega-menú + sidebar) y muestra todo.
+function clearFilters(){
+  state.mega = null;
+  resetSidebar();
+  renderProducts();
+  setCatalogTitle(null);
+}
+
+// Si el usuario toca el sidebar, desactiva el filtro del mega-menú.
+function onSidebarChange(){
+  state.mega = null;
+  setCatalogTitle(null);
+  renderProducts();
+}
+
+function resetSidebar(){
+  ['#fNuevo','#fOferta','#fMenor'].forEach(sel => { const el = $(sel); if (el) el.checked = false; });
+  $$('.f-cat, .f-brand').forEach(el => el.checked = false);
+}
+
+// Cambia el título del catálogo (el <h3> que está justo antes de #products).
+function setCatalogTitle(label){
+  const grid = document.getElementById('products');
+  const h = grid ? grid.previousElementSibling : null;
+  if (h && h.tagName === 'H3') h.textContent = label || 'Todos los productos';
+}
+
+// Escapa texto para insertarlo en HTML de forma segura.
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
 /* Filters */
@@ -76,7 +140,7 @@ function buildFilters(){
   const brands = [...new Set(state.products.map(p=>p.brand))];
   $('#catChecks').innerHTML = cats.map(c=>`<label><input type="checkbox" value="${c}" class="f-cat"> ${c}</label>`).join('');
   $('#brandChecks').innerHTML = brands.map(b=>`<label><input type="checkbox" value="${b}" class="f-brand"> ${b}</label>`).join('');
-  $$('#fNuevo,#fOferta,#fMenor,.f-cat,.f-brand').forEach(el=>el.addEventListener('change',renderProducts));
+  $$('#fNuevo,#fOferta,#fMenor,.f-cat,.f-brand').forEach(el=>el.addEventListener('change',onSidebarChange));
 }
 function matchesFilters(p){
   const nuevo = $('#fNuevo').checked;
@@ -88,12 +152,29 @@ function matchesFilters(p){
   if(oferta && !(p.tags||[]).includes('oferta')) return false;
   if(catSel.length && !catSel.includes(p.category)) return false;
   if(brandSel.length && !brandSel.includes(p.brand)) return false;
+  if(state.mega){
+    if(state.mega.tag){
+      if(!(p.tags||[]).includes(state.mega.tag)) return false;
+    } else if(state.mega.cats && state.mega.cats.size){
+      if(!state.mega.cats.has(String(p.category||'').toLowerCase())) return false;
+    }
+  }
   return true;
 }
 function renderProducts(){
   let data = state.products.filter(matchesFilters);
   if($('#fMenor').checked){ data = data.slice().sort((a,b)=>a.price-b.price); }
   const root = $('#products'); root.innerHTML='';
+  if(!data.length){
+    const label = state.mega?.label || 'esta selección';
+    root.innerHTML = `
+      <div style="grid-column:1/-1;text-align:center;padding:48px 16px;color:var(--muted)">
+        <div style="font-size:48px">🧺</div>
+        <p style="margin:8px 0 16px">Aún no tenemos productos en <strong>${escapeHtml(label)}</strong>.</p>
+        <button class="btn primary" onclick="clearFilters()">Ver todos los productos</button>
+      </div>`;
+    return;
+  }
   data.forEach(p=>{
     const card = document.createElement('div'); card.className='card';
     card.innerHTML = `
@@ -414,6 +495,7 @@ window.openAuth = openAuth;
 window.closeAuth = closeAuth;
 window.logout = logout;
 window.showSimple = showSimple;
+window.clearFilters = clearFilters;
 
 
 
