@@ -1,14 +1,11 @@
 <?php
-// Plantilla de configuración de Stripe.
-// Copia este archivo a `stripe_config.php` y rellena tus claves reales:
+// Configuración LOCAL de Stripe (solo para desarrollo con XAMPP).
+// Copia este archivo a `stripe_config.php` y rellena tus claves de prueba:
 //   cp api/stripe_config.example.php api/stripe_config.php
-// `stripe_config.php` está en .gitignore, así que tu clave secreta NO se versiona.
-require_once __DIR__ . '/../vendor/autoload.php';
+// `stripe_config.php` está en .gitignore.
+// En PRODUCCIÓN no se usa este archivo: las claves se leen de variables de
+// entorno (ver .env.example). La inicialización la hace api/stripe_init.php.
 
 $STRIPE_SECRET      = 'sk_test_TU_CLAVE_SECRETA';
 $STRIPE_PUBLISHABLE = 'pk_test_TU_CLAVE_PUBLICABLE';
-
-\Stripe\Stripe::setApiKey($STRIPE_SECRET);
-
-// Dominio local (ajústalo si cambias la carpeta o usas otro host)
-$STRIPE_DOMAIN = 'http://localhost/fruteria-madrid';
+$STRIPE_DOMAIN      = 'http://localhost/fruteria-madrid';

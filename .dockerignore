@@ -1,0 +1,9 @@
+.git
+.gitignore
+vendor
+node_modules
+docs
+*.md
+.DS_Store
+api/stripe_config.php
+api/firebase-service-account.json

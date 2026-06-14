@@ -169,6 +169,36 @@ http://localhost/fruteria-madrid/index.php
 
 ---
 
+## ☁️ Deploy (free, no credit card)
+
+The app is container-ready (`Dockerfile`) and reads all secrets from **environment
+variables**, so it can run on any host without committing credentials. A fully-free,
+durable setup:
+
+- **App:** [Render](https://render.com) — free Docker web service.
+- **Database:** [TiDB Cloud Serverless](https://tidbcloud.com) (MySQL-compatible, free,
+  TLS) or [Aiven for MySQL](https://aiven.io) free plan.
+
+### Steps (overview)
+
+1. **Database** — create a free MySQL cluster, then import `db.sql` plus the
+   `migration*.sql` files. Note its host, port, user, password, and database name.
+2. **Render** — *New → Web Service*, connect this GitHub repo, runtime **Docker**, plan
+   **Free**.
+3. **Environment variables** (see [`.env.example`](.env.example)):
+   `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASS`, `DB_NAME`, `DB_SSL=1`,
+   `DB_SSL_CA=/etc/ssl/certs/ca-certificates.crt`, `STRIPE_SECRET`,
+   `STRIPE_PUBLISHABLE`, `STRIPE_DOMAIN` (your Render URL), and
+   `FIREBASE_SERVICE_ACCOUNT` (the full service-account JSON on one line).
+4. **Firebase Console → Authentication → Settings → Authorized domains** — add your
+   Render domain.
+5. Deploy. Render rebuilds automatically on every `git push`.
+
+> The free Render service sleeps after ~15 min of inactivity; the first request after
+> that takes ~30 s to wake up.
+
+---
+
 ## 🔌 API Endpoints
 
 | Method   | Endpoint                          | Description                                              |

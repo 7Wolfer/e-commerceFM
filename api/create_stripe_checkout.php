@@ -3,7 +3,7 @@ header('Content-Type: application/json; charset=utf-8');
 session_start();
 
 require_once __DIR__ . '/config.php';        // $mysqli (para precios reales)
-require_once __DIR__ . '/stripe_config.php';  // $STRIPE_* y setApiKey
+require_once __DIR__ . '/stripe_init.php';   // $STRIPE_* (variables de entorno o archivo local)
 
 // Lee el body JSON
 $raw     = file_get_contents('php://input');

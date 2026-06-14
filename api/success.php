@@ -1,6 +1,6 @@
 <?php
 // Página de éxito: valida la Checkout Session y crea el pedido en la BD
-require_once __DIR__ . '/stripe_config.php';
+require_once __DIR__ . '/stripe_init.php'; // $STRIPE_* (variables de entorno o archivo local)
 require_once __DIR__ . '/config.php'; // mysqli
 session_start();
 

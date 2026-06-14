@@ -1,0 +1,31 @@
+# Blueprint de Render (https://render.com). Opcional: puedes crear el servicio
+# a mano desde el panel. Las variables con `sync: false` se rellenan en el panel
+# (son secretas y no deben ir en el repo).
+services:
+  - type: web
+    name: fruteria-madrid
+    runtime: docker
+    plan: free
+    envVars:
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASS
+        sync: false
+      - key: DB_NAME
+        value: fruteria_madrid
+      - key: DB_SSL
+        value: "1"
+      - key: DB_SSL_CA
+        value: /etc/ssl/certs/ca-certificates.crt
+      - key: STRIPE_SECRET
+        sync: false
+      - key: STRIPE_PUBLISHABLE
+        sync: false
+      - key: STRIPE_DOMAIN
+        sync: false
+      - key: FIREBASE_SERVICE_ACCOUNT
+        sync: false
