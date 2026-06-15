@@ -45,7 +45,9 @@ while($row = $res->fetch_assoc()){
   $data[] = [
     'id'=>$row['id'],'sku'=>$row['sku'],'name'=>$row['nombre'],
     'brand'=>$row['marca'],'brand_id'=>$row['marca_id'],
-    'price'=>floatval($row['precio']),'unit'=>$row['unidad'],
+    'price'=>floatval($row['precio']),
+    'oldPrice'=> (isset($row['precio_anterior']) && $row['precio_anterior']!==null) ? floatval($row['precio_anterior']) : null,
+    'unit'=>$row['unidad'],
     'img'=>$row['imagen'],'category'=>$row['categoria'],'category_id'=>$row['categoria_id'],
     'tags'=>array_values(array_filter([ $row['nuevo']?'nuevo':null, $row['oferta']?'oferta':null, $row['organico']?'organico':null ]))
   ];

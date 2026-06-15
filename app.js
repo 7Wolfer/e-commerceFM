@@ -19,7 +19,8 @@ const state = {
     'Salchichonería': ['Ver todos','Jamón y Pechuga','Carnes Frías','Especialidades','Embutidos','Salchichas','Tocino']
   },
   products: [],
-  mega: null   // filtro activo del mega-menú: { label, cats:Set, tag } | null
+  mega: null,  // filtro activo del mega-menú: { label, cats:Set, tag } | null
+  search: ''   // texto del buscador
 };
 
 function saveCart(){ localStorage.setItem('fm_cart', JSON.stringify(state.cart)); renderCartCount(); }
@@ -107,6 +108,8 @@ function setMegaFilter(label, opts = {}){
 // Quita todos los filtros (mega-menú + sidebar) y muestra todo.
 function clearFilters(){
   state.mega = null;
+  state.search = '';
+  const s = document.getElementById('searchInput'); if (s) s.value = '';
   resetSidebar();
   renderProducts();
   setCatalogTitle(null);
@@ -124,11 +127,10 @@ function resetSidebar(){
   $$('.f-cat, .f-brand').forEach(el => el.checked = false);
 }
 
-// Cambia el título del catálogo (el <h3> que está justo antes de #products).
+// Cambia el título del catálogo.
 function setCatalogTitle(label){
-  const grid = document.getElementById('products');
-  const h = grid ? grid.previousElementSibling : null;
-  if (h && h.tagName === 'H3') h.textContent = label || 'Todos los productos';
+  const h = document.getElementById('catalogTitle');
+  if (h) h.textContent = label || 'Todos los productos';
 }
 
 // Escapa texto para insertarlo en HTML de forma segura.
@@ -163,6 +165,7 @@ function matchesFilters(p){
   if(oferta && !(p.tags||[]).includes('oferta')) return false;
   if(catSel.length && !catSel.includes(p.category)) return false;
   if(brandSel.length && !brandSel.includes(p.brand)) return false;
+  if(state.search && !String(p.name||'').toLowerCase().includes(state.search)) return false;
   if(state.mega){
     if(state.mega.tag){
       if(!(p.tags||[]).includes(state.mega.tag)) return false;
@@ -172,35 +175,85 @@ function matchesFilters(p){
   }
   return true;
 }
+/* Tarjeta de producto reutilizable (catálogo y ofertas). */
+function productCard(p){
+  const card = document.createElement('article');
+  card.className = 'card';
+  const tags = p.tags || [];
+  const hasOffer = p.oldPrice && p.oldPrice > p.price;
+  const pct = hasOffer ? Math.round((1 - p.price / p.oldPrice) * 100) : 0;
+  const badges = [];
+  if (hasOffer) badges.push(`<span class="pill pill-offer">-${pct}%</span>`);
+  if (tags.includes('nuevo')) badges.push(`<span class="pill pill-new">Nuevo</span>`);
+  if (tags.includes('organico')) badges.push(`<span class="pill pill-organic">Orgánico</span>`);
+  card.innerHTML = `
+    <div class="card-media">
+      <img src="${escapeHtml(p.img)}" alt="${escapeHtml(p.name)}" loading="lazy">
+      ${badges.length ? `<div class="card-badges">${badges.join('')}</div>` : ''}
+    </div>
+    <div class="card-body">
+      <span class="card-brand">${escapeHtml(p.brand || '')}</span>
+      <h3 class="card-name">${escapeHtml(p.name)}</h3>
+      <div class="card-foot">
+        <div class="card-price">
+          <span class="price-now">${formatPrice(p.price)}</span>
+          <span class="price-unit">${escapeHtml(p.unit || '')}</span>
+          ${hasOffer ? `<span class="price-old">${formatPrice(p.oldPrice)}</span>` : ''}
+        </div>
+        <button class="card-add" aria-label="Agregar ${escapeHtml(p.name)}">+</button>
+      </div>
+    </div>`;
+  card.querySelector('.card-add').addEventListener('click', () => addToCart(p));
+  return card;
+}
+
 function renderProducts(){
   let data = state.products.filter(matchesFilters);
   if($('#fMenor').checked){ data = data.slice().sort((a,b)=>a.price-b.price); }
   const root = $('#products'); root.innerHTML='';
   if(!data.length){
-    const label = state.mega?.label || 'esta selección';
+    const label = state.search ? `"${state.search}"` : (state.mega?.label || 'esta selección');
     root.innerHTML = `
-      <div style="grid-column:1/-1;text-align:center;padding:48px 16px;color:var(--muted)">
+      <div style="grid-column:1/-1;text-align:center;padding:60px 16px;color:var(--muted)">
         <div style="font-size:48px">🧺</div>
-        <p style="margin:8px 0 16px">Aún no tenemos productos en <strong>${escapeHtml(label)}</strong>.</p>
-        <button class="btn primary" onclick="clearFilters()">Ver todos los productos</button>
+        <p style="margin:10px 0 16px">No encontramos productos en <strong>${escapeHtml(label)}</strong>.</p>
+        <button class="btn btn-primary" onclick="clearFilters()">Ver todos los productos</button>
       </div>`;
     return;
   }
-  data.forEach(p=>{
-    const card = document.createElement('div'); card.className='card';
-    card.innerHTML = `
-      <div class="thumb"><img alt="${p.name}" src="${p.img}"/></div>
-      <div class="body">
-        <div class="price">${formatPrice(p.price)} <small>${p.unit}</small></div>
-        <div style="min-height:40px">${p.name}</div>
-        <div class="add">
-          <span class="badge">${p.brand}</span>
-          <button class="inc">+</button>
-        </div>
-      </div>`;
-    card.querySelector('.inc').addEventListener('click',()=>addToCart(p));
-    root.appendChild(card);
-  });
+  const frag = document.createDocumentFragment();
+  data.forEach(p => frag.appendChild(productCard(p)));
+  root.appendChild(frag);
+}
+
+/* Sección "Ofertas de la semana" (productos con etiqueta 'oferta'). */
+function renderOffers(){
+  const root = document.getElementById('offers');
+  if(!root) return;
+  const items = state.products.filter(p => (p.tags||[]).includes('oferta'));
+  const section = document.getElementById('ofertasSection');
+  if(!items.length){ if(section) section.classList.add('hidden'); return; }
+  root.innerHTML = '';
+  const frag = document.createDocumentFragment();
+  items.forEach(p => frag.appendChild(productCard(p)));
+  root.appendChild(frag);
+}
+
+/* Cuenta regresiva de ofertas (hasta el fin del día). */
+function startOffersCountdown(){
+  const el = document.getElementById('offersCountdown');
+  if(!el) return;
+  const tick = () => {
+    const now = new Date();
+    const end = new Date(now); end.setHours(23,59,59,999);
+    const s = Math.max(0, Math.floor((end - now) / 1000));
+    const h = String(Math.floor(s/3600)).padStart(2,'0');
+    const m = String(Math.floor((s%3600)/60)).padStart(2,'0');
+    const ss = String(s%60).padStart(2,'0');
+    el.textContent = `${h}:${m}:${ss}`;
+  };
+  tick();
+  setInterval(tick, 1000);
 }
 
 /* Cart */
@@ -249,24 +302,29 @@ function updateCartCount(){
 /* Pintar líneas dentro del drawer */
 function renderCart(){
   const root = document.getElementById('cartLines');
-  if (!root) return;                // <-- FIX CRÍTICO
+  if (!root) return;
 
   root.innerHTML = '';
+  if (!state.cart.length){
+    root.innerHTML = `<div class="cart-empty"><div class="emoji">🛒</div><p>Tu carrito está vacío.</p></div>`;
+    const t = document.getElementById('totalPrice'); if (t) t.textContent = formatPrice(0);
+    return;
+  }
   state.cart.forEach((l, idx)=>{
     const row = document.createElement('div');
-    row.className = 'line';
+    row.className = 'cart-item';
     row.innerHTML = `
-      <img src="${l.img}" alt="">
-      <div style="flex:1">
-        <div style="font-weight:600">${l.name}</div>
-        <div>${formatPrice(l.price)}</div>
+      <img src="${escapeHtml(l.img)}" alt="">
+      <div class="cart-item-info">
+        <span class="cart-item-name">${escapeHtml(l.name)}</span>
+        <span class="cart-item-price">${formatPrice(l.price)}</span>
       </div>
-      <div style="display:flex;gap:6px;align-items:center">
-        <button class="btn" onclick="qty(${idx},-1)">−</button>
+      <div class="qty-stepper">
+        <button onclick="qty(${idx},-1)" aria-label="Menos">−</button>
         <span>${l.qty}</span>
-        <button class="btn" onclick="qty(${idx},1)">+</button>
+        <button onclick="qty(${idx},1)" aria-label="Más">+</button>
       </div>
-      <button class="btn" onclick="removeLine(${idx})">×</button>
+      <button class="cart-item-remove" onclick="removeLine(${idx})" aria-label="Quitar">Quitar</button>
     `;
     root.appendChild(row);
   });
@@ -281,6 +339,8 @@ function toggleCart(open){
   if (!drawer) return;
   drawer.classList.toggle('open', open);
   drawer.setAttribute('aria-hidden', open ? 'false' : 'true');
+  document.getElementById('cartOverlay')?.classList.toggle('show', open);
+  document.body.style.overflow = open ? 'hidden' : '';
   if (open) renderCart();
 }
 
@@ -344,8 +404,10 @@ async function init(){
   await refreshUserUI();
   const prodRes = await fetch('./api/products.php'); state.products = await prodRes.json();
   buildFilters();
+  renderOffers();
   renderProducts();
   renderCartCount();
+  startOffersCountdown();
   navigate('catalogo');
 }
 init();
@@ -506,6 +568,16 @@ document.querySelectorAll("input[name='fulfill']").forEach(r =>
 );
 // Llama una vez al cargar
 updateCheckoutBtnText();
+
+/* Buscador del header */
+document.getElementById('searchInput')?.addEventListener('input', (e) => {
+  state.search = e.target.value.trim().toLowerCase();
+  document.getElementById('catalogoView')?.classList.remove('hidden');
+  document.getElementById('perfilView')?.classList.add('hidden');
+  document.getElementById('simplePage')?.classList.add('hidden');
+  setCatalogTitle(state.search ? `Resultados para "${e.target.value.trim()}"` : null);
+  renderProducts();
+});
 
 window.renderCart = renderCart;
 window.qty = qty;

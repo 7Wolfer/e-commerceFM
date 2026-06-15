@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS productos (
   categoria_id INT,
   marca_id INT,
   precio DECIMAL(10,2) NOT NULL DEFAULT 0,
+  precio_anterior DECIMAL(10,2) DEFAULT NULL,
   unidad VARCHAR(40) DEFAULT '/kg',
   imagen VARCHAR(255),
   nuevo TINYINT(1) DEFAULT 0,
@@ -96,3 +97,9 @@ INSERT INTO productos (sku, nombre, categoria_id, marca_id, precio, unidad, imag
 ('aguacate-hass','Aguacate Hass',1,3,106.60,'/kg','assets/img/productos/aguacateHass.jpg',1,0,1),
 ('espinaca','Espinaca Orgánica',2,5,139.90,'/454g','assets/img/productos/espinacaOrganica.jpg',0,0,1),
 ('datil-medjool','Dátil Medjool Orgánico',3,6,279.93,'/908g','assets/img/productos/datil.jpg',0,0,1);
+
+-- Ofertas de la semana (precio anterior para mostrar descuento)
+UPDATE productos SET oferta = 1, precio_anterior = 29.90 WHERE sku = 'jitomate-saladette';
+UPDATE productos SET oferta = 1, precio_anterior = 27.00 WHERE sku = 'limon-semilla';
+UPDATE productos SET oferta = 1, precio_anterior = 34.90 WHERE sku = 'platano-chiapas';
+UPDATE productos SET oferta = 1, precio_anterior = 24.90 WHERE sku = 'zanahoria';

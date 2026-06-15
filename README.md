@@ -18,16 +18,17 @@ by **paying online with Stripe** for home delivery.
 
 ## 📸 Screenshots
 
-> Screenshots coming soon. To add them, drop PNGs into `docs/screenshots/` and uncomment
-> the block below. For a GIF demo, record with Kap (macOS) / ScreenToGif (Windows) and
-> save it as `docs/screenshots/demo.gif`.
+> 📷 _Coming soon._ To add them, drop these PNGs into `docs/screenshots/` and uncomment the
+> gallery below: `01-hero.png`, `02-ofertas.png`, `03-catalogo.png`, `04-mobile.png`.
 
-<!--
-| Catalog | Department filtering | Cart |
+<!-- Una vez que existan las imágenes, descomenta este bloque:
+<p align="center">
+  <img src="docs/screenshots/01-hero.png" alt="Home — hero, live search and department menu" width="100%">
+</p>
+
+| Weekly offers | Catalog & filters | Mobile |
 | --- | --- | --- |
-| ![Catalog](docs/screenshots/catalogo.png) | ![Filtering](docs/screenshots/filtros.png) | ![Cart](docs/screenshots/carrito.png) |
-
-![Demo](docs/screenshots/demo.gif)
+| ![Weekly offers](docs/screenshots/02-ofertas.png) | ![Catalog and filters](docs/screenshots/03-catalogo.png) | ![Mobile view](docs/screenshots/04-mobile.png) |
 -->
 
 ---
@@ -46,8 +47,12 @@ by **paying online with Stripe** for home delivery.
   - **Pickup** → order is created directly in the database (pay in store).
   - **Delivery** → redirects to **Stripe Checkout**; on success the paid order is
     persisted in the database.
+- **Live search** in the header — filter products by name as you type.
+- **Weekly offers** section with the original (strike-through) price and an automatic
+  discount badge, plus a live countdown.
 - **Geolocation** helper to autofill the delivery address.
-- Responsive UI built with vanilla HTML/CSS/JS (no front-end framework).
+- **Modern, responsive UI** built with vanilla HTML/CSS/JS (no framework) — a refined
+  "fresh market" design using the *Fraunces* + *Hanken Grotesk* typefaces.
 
 ---
 
@@ -271,18 +276,14 @@ account** and **Stripe secret key** grant privileged access and must be kept pri
 
 Known limitations and planned improvements:
 
-- [ ] **Deploy a live demo** on a PHP + MySQL host (Railway, Render, InfinityFree) and link it here.
-- [ ] **Touch-friendly mega-menu** — the department panel currently opens on hover only.
+- [ ] **Deploy the live demo** — the app is already containerized (`Dockerfile`, env-based config); it just needs a host (Render + a free MySQL DB) and a link here.
 - [ ] **Stripe webhook** (`checkout.session.completed`) so orders persist even if the user closes the tab, with idempotency to avoid duplicates.
 - [ ] **Admin panel** to manage products, categories, and orders.
 - [ ] **Order history** for logged-in users.
 - [ ] **Server-side validation & CSRF protection** on POST endpoints.
-- [ ] **Escape all dynamic HTML** (replace remaining `innerHTML` with safe rendering).
-- [ ] **Relative base paths** so the app isn't tied to the `/fruteria-madrid/` URL.
 - [ ] **Automated tests** (PHPUnit + a few front-end tests).
-- [ ] **Local product images** instead of external URLs.
 
-**Recently shipped:** ✅ mega-menu catalog filtering · ✅ server-side price validation · ✅ secrets removed from version control.
+**Recently shipped:** ✅ professional UI redesign (hero, weekly offers, live search) · ✅ touch-friendly mega-menu · ✅ relative base paths · ✅ local product images · ✅ mega-menu catalog filtering · ✅ server-side price validation · ✅ secrets removed from version control.
 
 ---
 
