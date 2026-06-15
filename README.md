@@ -18,18 +18,13 @@ by **paying online with Stripe** for home delivery.
 
 ## 📸 Screenshots
 
-> 📷 _Coming soon._ To add them, drop these PNGs into `docs/screenshots/` and uncomment the
-> gallery below: `01-hero.png`, `02-ofertas.png`, `03-catalogo.png`, `04-mobile.png`.
-
-<!-- Una vez que existan las imágenes, descomenta este bloque:
 <p align="center">
-  <img src="docs/screenshots/01-hero.png" alt="Home — hero, live search and department menu" width="100%">
+  <img src="docs/screenshots/01-hero.webp" alt="Home — hero, live search and department menu" width="100%">
 </p>
 
-| Weekly offers | Catalog & filters | Mobile |
+| Weekly offers | Catalog & filters | Cart |
 | --- | --- | --- |
-| ![Weekly offers](docs/screenshots/02-ofertas.png) | ![Catalog and filters](docs/screenshots/03-catalogo.png) | ![Mobile view](docs/screenshots/04-mobile.png) |
--->
+| ![Weekly offers](docs/screenshots/02-ofertas.webp) | ![Catalog and filters](docs/screenshots/03-catalogo.webp) | ![Cart drawer](docs/screenshots/04-carrito.webp) |
 
 ---
 
